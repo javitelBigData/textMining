@@ -1,0 +1,90 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage{times}
+\usepackage{url}
+\usepackage{latexsym}
+
+\title{Text Mining en Social Media. Master Big Data. Pos tagger}
+
+\author{Javier Vidal Tellols \\
+  {\tt javitel@inf.upv.es} \\}
+
+\date{13/07/2017}
+
+\begin{document}
+\maketitle
+\begin{abstract}
+En este artículo se va a proponer la implementación de un programa capaz de realizar el análisis de texto enriquecido proviniente de una muestra de tweets dada para realizar a posteriori una clasificación del género y del origen del autor de dicho mensaje haciendo uso de una combinación de análisis morfosintáctico empleando la libreria pos tagger de Stanford y una resolución de nombres de dominios de las fuentes empleadas extendiendo las urls contenidas en los propios mensajes.\end{abstract}
+
+
+\section{Introducción}
+
+Durante el desarrollo del proyecto llegamos a la conclusión de que la inclusión de un análisis del texto escrito del autor podría aportar riqueza para discernir los perfiles deseados, por ello decidimos incluir además del resto de líneas de desarrollo, la implementación de un programa capaz de extraer dicha información de los textos dados. Como ya se poseía un conocimiento previo de la librería de Stanford se decidió hacer uso de ella. Por otro lado, por sugerencia de uno de los profesores se nos indico que en los enlaces a webs externas podría aportar información muy valiosa, como los dominios dónde se encuentran las fuentes que emplean o discernir contenidos webs que ciertos perfiles visiten asiduamente.
+
+
+\section{Dataset}
+
+Al plantearse el problema a resolver se decidió observar con una pequeña muestra los datos que podían extraerse y la conclusión es que el tamaño del problema influye enormemente en esta parte del proyecto, pues la funcion de clasificar las palabras del lenguaje natural no se resuelven de una manera sencilla, requeriendo de mucho tiempo de ejecución para tener una muestra considerable añadiendo además un overhead considerable en cada muestra a analizar. Por otro lado, el análisis de las URLs puede ofrecer dos tipos de información, el dominio de origen de dicha web y el propio dominio que puede aportar información sobre los intereses del usuario. El primer caso aporta infomación sobre el origen de éste, el segundo en cambio, ofrece tambíen la capacidad de discernir entre los gustos, probablemente muy significativo a la hora de clasificar por género. Por contra, la segunda opción puede generar una matriz de coincidencia que tiene a infinito, que es la cantidad de dominios existentes en la web.
+
+\section{Propuesta del alumno}
+
+Los resultados vienen dados en colaboración con la colaboración del modelado realizada por Orscar Garibo Orts, decidimos focalizarnos cada uno de los integrantes del grupo en especializarnos en una parte del proyecto para permitirnos llegar a un nivel de profundización mayor.
+
+Se implementó un código en Python en base al usado en clase para proceder a analizar los tweets dados para realizar el análisis de los textos, la conclusión es que el tamaño de la muestra es excesivo para ser procesado de esta manera, por lo que se decidió implementar en java aplicando los conocimientos previos del lenguaje para realizar dicha tarea implementando técnicas de paralelización escogiendo como unidad mínima de tarea por hilo cada tweet de manera independiente, con lo que conseguimos realizar dicha operación en un tiempo entre las dos y las 3 horas, la conclusión es que la librería aporta información muy detallada sobre las palabras, añadiendo demasiada variabilidad, por lo que finalmente se simplificaron las clasificaciones, discernir entre los tipos de palabras elementales. 
+
+A posteriori se decidió incluir en el mismo programa desarrollado debido a que las directivas de paralelización aportaban un mejor rendimiento debido a la sobrecarga que supone el tiempo de respuesta en las llamadas HTTP, considerando aquellas secuencias que indicaban una llamada HTTP, se extraían y se resolvían de manera iterada hasta obtener el destino del enlace. La clasificación en un inicio se decidió realizar haciendo uso del dominio completo de los enlaces, pero se experimentaron problemas de rendimiento debido a la necesidad de mantener en memoria una extructura dinámica de tamaño variable que fuese capaz de mantener toda la información necesaria. Posteriormente se simplificó y solo se almacenaban el dominio de origen (.com, .es, .mx...) y aunque el rendimiento era notablemente mejor, la inestabilidad en las respuestas produjo errores a lo largo de la ejecución.
+
+\section{Resultados experimentales}
+
+Los resultados van a ser desglosados en dos casos de uso, ya que se pretende clasificar el autor de un tweet según su origen y su género, dos dimensiones en las que el impacto de la implementación puede variar. Los resultados se muestran empleando  Multi-Layer Perceptron (MLP), ya que es el modelo que mejores resultados ha presentado.
+
+
+En la variedad no se ve demasiado afectada la inclusión de los datos de pos tagger añadiendo ruido al modelo planteado. Tal y como se puede observar a continuación.
+\\
+\begin{table}[htbp]
+\begin{center}
+\begin{tabular}{|l|l|}
+\hline
+MLP & Accuracy \\
+\hline \hline
+TfIdf 0.90 Unigrams no accents stem & 91.64 \\ \hline
+TfIdf 0.90 Unigrams no accents TAGS & \textbf{91.00} \\ \hline
+\end{tabular}
+\caption{MLP + Stem and TAGS.}
+\label{tabla:sencilla}
+\end{center}
+\end{table}
+\\
+En el caso del género, en cambio, la inclusión de los datos del pos tagger han producido un incremento considerable.
+\\
+\begin{table}[htbp]
+\begin{center}
+\begin{tabular}{|l|l|}
+\hline
+MLP & Accuracy \\
+\hline \hline
+TfIdf 0.90 + TAGS + WC & \textbf{77.43} \\ \hline
+TfIdf 0.90 + WC & 75.14 \\ \hline
+\end{tabular}
+\caption{Common:MLP + keep punctuation.}
+\label{tabla:sencilla}
+\end{center}
+\end{table}
+\\
+El análisis de URLs no ha sido concluyente, ya que el tamaño de la muestra ha hecho imposible realizar el proceso completo sin que presentase problemas de estabilidad en las peticiones, generando errores en los resultados.
+
+\section{Conclusiones y trabajo futuro}
+
+La conclusión obtenida de este estudio nos indica que en efecto, el análisis de lenguaje natural aporta un valor notable en la clasificación en cuánto a género, no obstante el coste computacional de dicho análisis hace que el uso de estas técnicas sean de manera controlada y en casos en los que o se requiera de un aumento de precisión a cualquier coste o que el tiempo de respuesta no sea un requisito indispensable.
+
+Como trabajo futuro se observan dos grandes caminos, por un lado la simplificación de los resultados del pos tagger, proponiendo una adaptacion posterior para no pdoer parte de la información del análisis y mejorar la parte del sofware dedicada a la resolución de las direcciones a páginas web.
+
+\begin{thebibliography}{}
+
+\bibitem{The Stanford Natural Language Processing Group}
+\newblock 2017-06-09.
+\newblock {\em https://nlp.stanford.edu/software/tagger.shtml}.
+\newblock Version 3.8.0	.
+
+\end{thebibliography}
+
+\end{document}
